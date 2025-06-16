@@ -1,6 +1,6 @@
 from fastapi import FastAPI
 import schemas, database, models
-from .database import declarative_base, Base, SessionLocal
+from database import declarative_base, Base, SessionLocal
 
 
 
@@ -8,9 +8,9 @@ from .database import declarative_base, Base, SessionLocal
 app = FastAPI()
 
 #TODO: this code was just to check the direction of homepage
-# @app.get('/')
-# def home():
-#     return "hey"
+@app.get('/')
+def home():
+    return "hey"
 
 def get_database():
     db = SessionLocal()  #TODO: fix this Sessionlocal story
@@ -18,4 +18,6 @@ def get_database():
         yield db
     finally:
         db.close()
+
+
 
