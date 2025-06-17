@@ -3,6 +3,7 @@ from sqlalchemy import Column,String, Boolean, Integer, Text, DateTime
 from enum import Enum
 from sqlalchemy.sql import func
 from sqlalchemy import Enum as SQLAlchemyEnum
+from pydantic import EmailStr
 #this is just to ensure the jobs have 2 types
 class Jobtype(str, Enum):
     remote = "remote"
@@ -34,3 +35,22 @@ class Job(Base):
     def __repr__(self):
         print(f'{self.role} at {self.company}')
 
+class User(Base):
+    __tablename__ ="applicants"
+
+    id = Column(Integer, primary_key=True, index=True)
+    full_name = Column(String(100))
+    email = Column(String(100))
+    phone_number = Column(Integer)
+    is_active = Column(Boolean, default=True)
+    experience = Column(String(100))
+    cv = Column(String(200))
+    linkedin_url = Column(String(100))
+
+class Admin(Base):
+    __tablename__ = "admin"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(100))
+    email = Column(String(100))
+    is_hiring = Column(Boolean)
