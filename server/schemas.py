@@ -6,6 +6,7 @@ from datetime import datetime
 class UserBase(BaseModel):
     full_name: str
     email: EmailStr
+    password: str
     phone_number: Optional[str]
     is_active: Optional[bool] = True
     experience: Optional[str]
@@ -24,6 +25,7 @@ class UserResponse(UserBase):
 class Admin(BaseModel):
     name:str
     email: str
+    password:str
     is_hiring: bool
 
 class JobBase(BaseModel):
@@ -38,7 +40,7 @@ class JobBase(BaseModel):
     industry: str
     posted_at: Optional[datetime] = None
     deadline: Optional[datetime] = None
-    is_avaible:bool = True
+    is_available:bool = True
 
 class JobCreate(JobBase):
     pass

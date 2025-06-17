@@ -41,6 +41,7 @@ class User(Base):
     id = Column(Integer, primary_key=True, index=True)
     full_name = Column(String(100))
     email = Column(String(100))
+    password = Column(String(100))
     phone_number = Column(Integer)
     is_active = Column(Boolean, default=True)
     experience = Column(String(100))
@@ -53,4 +54,5 @@ class Admin(Base):
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(100))
     email = Column(String(100))
+    password = Column(String(100))
     is_hiring = Column(Boolean)
