@@ -70,3 +70,63 @@ def delete_admin(admin_id:int, db:Session= Depends(get_database)):
     db.query(models.Admin).filter(models.Admin.id == admin_id).delete(synchronize_session=False)
     db.commit()
     return 'Admin deleted succesfully'
+
+
+""""lets work for user"""
+@app.post('/home', status_code=status.HTTP_201_CREATED)
+def register_user(request: schemas.UserBase, db:Session = Depends(get_database)):
+    existing_user = db.query(models.User).filter(models.User.email == request.email and models.User.phone_number == request.phone_number).first()
+    if existing_user:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE,
+            detail = 'User already existed..'
+        )
+    new_user = models.User(
+        full_name = request.full_name,
+        email = request.email,
+        phone_number = request.phone_number,
+        is_active = request.is_active,
+        experience = request.experience,
+        cv = request.cv,
+        linkedin_url = str(User.linkedin_url) 
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return {"message": f"User created successfully for {new_user.full_name}"}
+
+@app.get('/home/all_users')
+def all_users(db:schemas = Depends(get_database)):
+    users = db.query(models.User).all()
+    return users
+"""
+update the user
+"""
+@app.put('/home/{user_id}/update')
+def update_user(user_id:int, request: schemas.UserBase, db:Session = Depends(get_database)):
+    updated_user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not updated_user:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, 
+            detail = 'User update failed'
+        )
+    updated_user.full_name = request.full_name
+    updated_user.email = request.email
+    updated_user.phone_number = request.phone_number
+    updated_user.is_active = request.is_active
+    updated_user.experience = request.experience
+    updated_user.cv = request.cv
+    updated_user.linkedin_url = str(request.linkedin_url)
+
+    db.commit()
+    db.refresh(updated_user)
+    return {"message": f"User information updated for {updated_user.full_name} with id {user_id}"}
+
+
+@app.delete('/home/delete/{user_id}')
+def delete_user(user_id:int, db:Session = Depends(get_database)):
+    db.query(models.User).filter(models.User.id == user_id).delete(synchronize_session=False)
+    db.commit()
+    return {"message" : f"User with {user_id} deleted succesfully"}
+
+
