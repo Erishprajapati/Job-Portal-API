@@ -1,11 +1,10 @@
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, Query
 import schemas, database, models, hashing
 from database import Base, SessionLocal, engine
 from sqlalchemy.orm import Session
 from models import Admin, Job, User
 from hashing import Hash
-
-
+from typing import List, Optional
 
 #making the instance of the app
 app = FastAPI()
@@ -142,7 +141,7 @@ def create_jobs(request: schemas.JobBase, db:Session = Depends(get_database)):
     if existing_jobs:
         raise HTTPException(
             status_code=status.HTTP_406_NOT_ACCEPTABLE,
-            details = "Job exists with these information..."
+            detail = "Job exists with these information..."
         )
     add_job = models.Job(
         company = request.company,
@@ -194,3 +193,19 @@ def update_jobs(job_id: int, request: schemas.JobBase, db:Session = Depends(get_
     db.refresh(jobs)
     return {"Message" : f"Job information updated for {request.company}"}
 
+@app.get('/home/get_jobs', tags= ['Jobs'])
+def get_jobs(page: int = Query(1, ge = 1), limit: int = Query(10, ge = 1), location: Optional[str] = None, type:Optional[str] = None,db:Session = Depends(get_database)):
+    skip = (page - 1) * limit
+    query = db.query(models.Job)
+    if location:
+        query = query.filter(models.Job.location.ilike(f"%{location}%"))
+    if type:
+        query = query.filter(models.Job.type.ilike(f"%{type}%"))
+    total_jobs = query.count()
+    jobs = query.offset(skip).limit(limit).all()
+    return {
+        "page": page,
+        "limit": limit,
+        "total_jobs": total_jobs,
+        "jobs": jobs
+    }
