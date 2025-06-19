@@ -5,10 +5,12 @@ from sqlalchemy.orm import Session
 from models import Admin, Job, User
 from hashing import Hash
 from typing import List, Optional
+from elasticsearch import Elasticsearch
 
 #making the instance of the app
 app = FastAPI()
-
+es = Elasticsearch("http://localhost:9200")
+print("Ping:", es.ping())
 #TODO: this code was just to check the direction of homepage
 # @app.get('/')
 # def home():
@@ -160,7 +162,12 @@ def create_jobs(request: schemas.JobBase, db:Session = Depends(get_database)):
     db.add(add_job)
     db.commit()
     db.refresh(add_job)
-    return {"message" : f"Job added fpr {request.company} for the role of {request.role}"}
+    es.index(index = "jobs", id = add_job.id,body= {
+        "role" : add_job.role,
+        "company" : add_job.company,
+        "description" : add_job.description
+    })
+    return {"message" : f"Job added for {request.company} for the role of {request.role}"}
 
 @app.get('/home/all_jobs', tags=['Jobs'])
 def show_jobs(db:Session = Depends(get_database)):
@@ -209,3 +216,31 @@ def get_jobs(page: int = Query(1, ge = 1), limit: int = Query(10, ge = 1), locat
         "total_jobs": total_jobs,
         "jobs": jobs
     }
+
+@app.post('/home/apply_jobs', tags=["Jobs"])
+def apply_jobs(request:schemas.ApplyJob, db:Session = Depends(get_database)):
+    job = db.query(models.Job).filter(models.Job.id == request.job_id).first()
+    if not job:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail = "Job not found"
+        )
+    
+    user = db.query(models.User).filter(models.User.id == request.user_id).first()
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail = "User not found"
+        )
+    
+    already_applied = db.query(models.Application).filter_by(user_id = request.user_id, job_id = request.job_id).first()
+    if already_applied:
+        raise HTTPException(
+            status_code=status.HTTP_406_NOT_ACCEPTABLE, detail = "already applied for this role"
+
+        )
+    
+    application = models.Application(user_id = request.user_id, job_id = request.job_id)
+    db.add(application)
+    db.commit()
+    db.refresh(application)
+    return {"message": "Application submitted successfully"}
